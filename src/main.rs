@@ -72,6 +72,7 @@ enum Commands {
         /// Where to unpack the commit
         path: PathBuf,
     },
+    ShowRef {},
 }
 
 fn main() -> anyhow::Result<()> {
@@ -95,5 +96,6 @@ fn main() -> anyhow::Result<()> {
             commands::log::exec(commit)
         }
         Commands::RestoreCommit { commit, path } => commands::restore_commit::exec(commit, &path),
+        Commands::ShowRef {} => commands::show_ref::exec(),
     }
 }

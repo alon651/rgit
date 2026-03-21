@@ -5,4 +5,5 @@ pub mod init;
 pub mod log;
 pub mod ls_tree;
 pub mod restore_commit;
+pub mod show_ref;
 pub mod write_tree;

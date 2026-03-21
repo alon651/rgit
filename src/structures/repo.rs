@@ -61,4 +61,13 @@ impl Repo {
             Some(".git") | Some(".rgit") | Some("target") | Some("node_modules")
         )
     }
+
+    pub fn resolve_ref(&self, path: &str) -> Option<String> {
+        let ref_path = self.data_dir.join(path);
+        let content = fs::read_to_string(ref_path).ok()?;
+        match content.trim().strip_prefix("ref: ") {
+            Some(content) => self.resolve_ref(content),
+            None => Some(content),
+        }
+    }
 }
