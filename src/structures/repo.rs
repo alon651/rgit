@@ -62,11 +62,16 @@ impl Repo {
         )
     }
 
-    pub fn resolve_ref(&self, path: &str) -> Option<String> {
+    pub fn resolve_ref(&self, path: &str, depth: usize) -> Option<String> {
+        if depth == 0 {
+            return None;
+        }
+
         let ref_path = self.data_dir.join(path);
         let content = fs::read_to_string(ref_path).ok()?;
+
         match content.trim().strip_prefix("ref: ") {
-            Some(content) => self.resolve_ref(content),
+            Some(content) => self.resolve_ref(content, depth - 1),
             None => Some(content),
         }
     }
