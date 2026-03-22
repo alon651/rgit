@@ -62,17 +62,19 @@ impl Repo {
         )
     }
 
-    pub fn resolve_ref(&self, path: &str, depth: usize) -> Option<String> {
+    pub fn resolve_ref(&self, path: &Path, depth: usize) -> Option<String> {
         if depth == 0 {
             return None;
         }
 
         let ref_path = self.data_dir.join(path);
         let content = fs::read_to_string(ref_path).ok()?;
+        let trimmed = content.trim();
 
-        match content.trim().strip_prefix("ref: ") {
-            Some(content) => self.resolve_ref(content, depth - 1),
-            None => Some(content),
+        if let Some(next_ref) = trimmed.strip_prefix("ref: ") {
+            self.resolve_ref(Path::new(next_ref), depth - 1)
+        } else {
+            Some(trimmed.to_string())
         }
     }
 }
