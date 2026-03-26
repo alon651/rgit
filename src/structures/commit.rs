@@ -10,9 +10,6 @@ use hex::encode;
 use std::{fmt, fs, path::Path};
 
 /// A Git-style commit object.
-///
-/// The formatting is deliberately kept in sync with `src/commands/commit_tree.rs` so
-/// that the bytes written by `Commit::to_string` match what the command constructs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Commit {
     pub tree: String,

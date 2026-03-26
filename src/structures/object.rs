@@ -160,19 +160,21 @@ impl Object {
         Ok((headers, rest_str))
     }
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ObjectType {
     Blob,
     Commit,
     Tree,
+    Tag,
 }
 
 impl ObjectType {
-    fn from_str(str: &str) -> anyhow::Result<ObjectType> {
+    pub fn from_str(str: &str) -> anyhow::Result<ObjectType> {
         match str {
             "blob" => Ok(ObjectType::Blob),
             "commit" => Ok(ObjectType::Commit),
             "tree" => Ok(ObjectType::Tree),
+            "tag" => Ok(ObjectType::Tag),
             _ => Err(anyhow!("invalid object type: {}", str)),
         }
     }
@@ -184,6 +186,7 @@ impl std::fmt::Display for ObjectType {
             ObjectType::Blob => write!(f, "blob"),
             ObjectType::Commit => write!(f, "commit"),
             ObjectType::Tree => write!(f, "tree"),
+            ObjectType::Tag => write!(f, "tag"),
         }
     }
 }

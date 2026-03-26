@@ -6,6 +6,7 @@ use std::path::PathBuf;
 mod commands;
 mod parsers;
 mod structures;
+mod utils;
 
 /// a git clone written in rust
 #[derive(Parser)]
@@ -72,7 +73,19 @@ enum Commands {
         /// Where to unpack the commit
         path: PathBuf,
     },
+    ///Shows alist of all the refs
     ShowRef {},
+    ///Create/List tags
+    Tag {
+        /// The commit hash to point to if not provided iwll list all tags
+        name: Option<String>,
+        /// The object to point to - can be a commit or tag if not provided will point to the current head
+        #[arg(value_parser = parse_sha1, requires = "name")]
+        object: Option<String>,
+        /// If enabled create a full tag object
+        #[arg(short = 'a', requires = "name")]
+        annonate: bool,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -97,5 +110,10 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::RestoreCommit { commit, path } => commands::restore_commit::exec(commit, &path),
         Commands::ShowRef {} => commands::show_ref::exec(),
+        Commands::Tag {
+            name,
+            object,
+            annonate,
+        } => commands::tag::exec(name, object, annonate),
     }
 }

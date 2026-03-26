@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use anyhow::{Ok, bail};
+
 pub const DIR_NAME: &str = ".rgit";
 
 #[derive(Debug)]
@@ -75,6 +77,20 @@ impl Repo {
             self.resolve_ref(Path::new(next_ref), depth - 1)
         } else {
             Some(trimmed.to_string())
+        }
+    }
+
+    /// Get the head content stripped from the prefix
+    pub fn get_head(&self) -> anyhow::Result<String> {
+        let path = self.data_dir.join("HEAD");
+
+        let content = fs::read_to_string(path)?;
+
+        let stripped = content.trim().strip_prefix("ref: ");
+
+        match stripped {
+            Some(ref_path) => Ok(ref_path.to_string()),
+            None => bail!("HEAD file is corrupted"),
         }
     }
 }

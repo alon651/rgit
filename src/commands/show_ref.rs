@@ -39,7 +39,6 @@ fn fill_refs(
         } else {
             if let Some(content) = repo.resolve_ref(&path, 10) {
                 let display_path = path.strip_prefix(base_path)?.to_string_lossy().into_owned();
-
                 map.insert(display_path, content);
             }
         }
