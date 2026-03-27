@@ -1,8 +1,13 @@
 use std::{fs, path::Path};
 
-use crate::{structures::repo::Repo, utils::user_edit_file};
+use crate::{
+    structures::{object::Object, repo::Repo, tag::Tag},
+    utils::user_edit_file,
+};
 
-use anyhow::{Context, Ok, anyhow, bail};
+use anyhow::{Context, Ok, anyhow};
+use chrono::Local;
+use hex::encode;
 
 pub fn exec(name: Option<String>, object: Option<String>, annonate: bool) -> anyhow::Result<()> {
     let repo =
@@ -13,8 +18,7 @@ pub fn exec(name: Option<String>, object: Option<String>, annonate: bool) -> any
     match name {
         Some(name) => {
             if annonate {
-                let message = user_edit_file(&repo,"TAGANNT","tag annotation")?;
-                
+                complex_tag(&repo, name, object)?
             } else {
                 simple_tag(&repo, name, object)?
             }
@@ -38,20 +42,61 @@ pub fn list_tags(repo: &Repo) -> anyhow::Result<()> {
 }
 
 pub fn simple_tag(repo: &Repo, name: String, object: Option<String>) -> anyhow::Result<()> {
-    let ref_dest = match object {
-        Some(object_hash) => object_hash,
-        None => {
-            let head = repo.get_head()?;
-            let path = Path::new(&head);
-            repo.resolve_ref(path, 10).context(
-                "could not resolve the refrence of head, maybe you didnt commit anything yet?",
-            )?
-        }
-    };
+    let ref_dest = resolve_target_or_head(repo, object)?;
 
     let tag_path = repo.data_dir.join("refs/tags").join(name);
 
     fs::write(tag_path, ref_dest)?;
 
     Ok(())
+}
+
+pub fn complex_tag(repo: &Repo, name: String, object: Option<String>) -> anyhow::Result<()> {
+    let message = user_edit_file(&repo, "TAGANNT", "tag annotation")?;
+
+    let tagger = "alon".to_string();
+    let tagger_email = "alonlevshani@gmail.com".to_string();
+
+    let timestamp = Local::now();
+
+    let ref_dest = resolve_target_or_head(repo, object.clone())?;
+
+    let object_type = Object::read(&repo, &ref_dest)?.object_type;
+
+    let tag = Tag::new(
+        &ref_dest,
+        object_type,
+        &name,
+        &tagger,
+        &tagger_email,
+        timestamp,
+        Some(message),
+    );
+
+    let tag_hash = tag.to_object().write(&repo)?;
+
+    let tag_hash = encode(tag_hash);
+
+    simple_tag(&repo, name, Some(tag_hash))?;
+
+    Ok(())
+}
+
+/// Resolves am object identifier or defaults to the current HEAD.
+///
+/// If `object` is `Some`, it returns the identifier as-is.
+/// If `None`, it attempts to resolve the reference pointed to by HEAD.
+///
+/// # Errors
+/// Returns an error if HEAD cannot be resolved (e.g., in an empty repository).
+fn resolve_target_or_head(repo: &Repo, object: Option<String>) -> Result<String, anyhow::Error> {
+    object.map_or_else(
+        || {
+            let head = repo.get_head()?;
+            repo.resolve_ref(Path::new(&head), 10).context(
+                "Could not resolve HEAD reference. Ensure the repository has at least one commit.",
+            )
+        },
+        Ok,
+    )
 }

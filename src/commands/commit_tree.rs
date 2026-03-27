@@ -3,7 +3,10 @@ use std::env;
 use chrono::Local;
 use hex::encode;
 
-use crate::{structures::{commit::Commit, repo::Repo}, utils::user_edit_file};
+use crate::{
+    structures::{commit::Commit, repo::Repo},
+    utils::user_edit_file,
+};
 
 use anyhow::anyhow;
 
@@ -15,7 +18,10 @@ pub fn exec(tree: String, parent: Option<String>, message: Option<String>) -> an
 
     let timestamp = Local::now();
 
-    let message = user_edit_file(&repo,"COMMITMSG","commit message")?;
+    let message = match message {
+        Some(message) => message,
+        None => user_edit_file(&repo, "COMMITMSG", "commit message")?,
+    };
 
     let commit = Commit::new(
         tree,

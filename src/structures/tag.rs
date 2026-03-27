@@ -17,20 +17,20 @@ pub struct Tag {
 
 impl Tag {
     pub fn new(
-        object: String,
+        object: &str,
         object_type: ObjectType,
-        tag_name: String,
-        tagger_name: String,
-        tagger_email: String,
+        tag_name: &str,
+        tagger_name: &str,
+        tagger_email: &str,
         timestamp: DateTime<Local>,
         message: Option<String>,
     ) -> Self {
         Self {
-            object,
+            object: object.to_string(),
             object_type,
-            tag_name,
-            tagger_name,
-            tagger_email,
+            tag_name: tag_name.to_string(),
+            tagger_name: tagger_name.to_string(),
+            tagger_email: tagger_email.to_string(),
             timestamp,
             message,
         }
@@ -40,6 +40,7 @@ impl Tag {
         Object::new(self.to_string().into_bytes(), ObjectType::Tag)
     }
 
+    #[allow(dead_code)]
     pub fn from_object(object: &Object) -> anyhow::Result<Self> {
         let (headers, message) = Object::parse_key_value(&object.data)?;
 
@@ -105,7 +106,7 @@ impl fmt::Display for Tag {
 
         let ts = self.timestamp.format("%s %z");
         body.push_str(&format!(
-            "author {} <{}> {}\n",
+            "tagger {} <{}> {}\n\n",
             self.tagger_name, self.tagger_email, ts
         ));
 
