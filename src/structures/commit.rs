@@ -47,7 +47,7 @@ impl Commit {
     }
 
     pub fn from_object(object: &Object) -> anyhow::Result<Self> {
-        ensure!(object.object_type == ObjectType::Commit, "Object must be Commit");
+        ensure!(object.object_type == ObjectType::Commit, "Object must be Commit, got {}",object.object_type);
 
 
         let (headers, message) = Object::parse_key_value(&object.data)?;

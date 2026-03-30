@@ -49,10 +49,8 @@ enum Commands {
     ///Create a new commit object
     CommitTree {
         ///An existing tree object.
-        // #[arg(value_parser = parse_sha1)]
         tree: String,
         ///The id of a parent commit object
-        // #[arg(value_parser = parse_sha1, short='p')]
         #[arg(short = 'p')]
         parent: Option<String>,
         ///A paragraph in the commit log message
@@ -62,13 +60,11 @@ enum Commands {
     /// Show commit logs
     Log {
         /// The commit to start from (defaults to HEAD)
-        // #[arg(value_parser = parse_sha1)]
         commit: Option<String>,
     },
     /// Unpacks a commit - like checkout
     RestoreCommit {
         /// The commit to unpack
-        // #[arg(value_parser = parse_sha1)]
         commit: String,
         /// Where to unpack the commit
         path: PathBuf,

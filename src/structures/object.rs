@@ -69,7 +69,8 @@ impl Object {
 
     fn find_object(repo: &Repo, name: &str) -> anyhow::Result<PathBuf> {
         if name == "HEAD"{
-            return Ok(repo.data_dir.join("HEAD"));
+            let resolved = repo.resolve_ref(&repo.data_dir.join("HEAD"), 10).context("failed to resolve HEAD")?;
+            return Ok(Self::hash_to_path(repo, &resolved));
         };
 
         if name.len() == 40 {
@@ -79,7 +80,7 @@ impl Object {
             }
         };
 
-        if name.len() > 4{
+        if name.len() >= 4{
             let objects_dir = repo.data_dir.join("objects").join(&name[..2]);
             if objects_dir.is_dir() {
                 let paths = fs::read_dir(objects_dir)?.filter_map(|entry|{

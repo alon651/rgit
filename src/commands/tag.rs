@@ -59,7 +59,7 @@ pub fn complex_tag(repo: &Repo, name: String, object: Option<String>) -> anyhow:
 
     let timestamp = Local::now();
 
-    let ref_dest = resolve_target_or_head(repo, object.clone())?; //todo: remove the clone
+    let ref_dest = resolve_target_or_head(repo, object)?;
 
     let object_type = Object::read(repo, &ref_dest)?.object_type;
 

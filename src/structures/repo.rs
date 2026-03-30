@@ -97,6 +97,9 @@ impl Repo {
     /// Get the path of a tag by its name
     /// Returns an error if the tag doesn't exist
     pub fn get_tag_path(&self, name: &str) -> anyhow::Result<PathBuf> {
+        if name.contains('/') || name.contains('\\') || name.contains("..") || name.is_empty() {
+            bail!("invalid tag name: {}", name);
+        }
         let path = self.data_dir.join("refs").join("tags").join(name);
         if path.is_file() {
             Ok(path)
