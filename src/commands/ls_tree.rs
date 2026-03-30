@@ -10,6 +10,6 @@ pub fn exec(hash: &str) -> anyhow::Result<()> {
     let tree = Tree::from_object(&obj)?;
 
     print!("{}", tree);
-    // std::io::stdout().write_all(&obj.data)?;
+
     Ok(())
 }

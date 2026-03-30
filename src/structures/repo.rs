@@ -93,4 +93,15 @@ impl Repo {
             None => bail!("HEAD file is corrupted"),
         }
     }
+
+    /// Get the path of a tag by its name
+    /// Returns an error if the tag doesn't exist
+    pub fn get_tag_path(&self, name: &str) -> anyhow::Result<PathBuf> {
+        let path = self.data_dir.join("refs").join("tags").join(name);
+        if path.is_file() {
+            Ok(path)
+        } else {
+            bail!("tag not found: {}", name);
+        }
+    }
 }

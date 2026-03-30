@@ -1,11 +1,11 @@
-use anyhow::{Context, Ok, anyhow};
+use anyhow::{Context, anyhow, bail};
 use flate2::write::ZlibEncoder;
 use flate2::{Compression, read::ZlibDecoder};
 use hex::encode;
 use sha1::{Digest, Sha1};
 use std::collections::HashMap;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fs, io::Read};
 
 use crate::structures::repo::Repo;
@@ -59,12 +59,63 @@ impl Object {
         Ok((ObjectType::from_str(ty)?, size, body))
     }
 
-    pub fn read(repo: &Repo, hash: &str) -> anyhow::Result<Object> {
-        let path = repo
-            .data_dir
+    fn hash_to_path(repo: &Repo, hash: &str) -> PathBuf {
+        repo.data_dir
             .join("objects")
             .join(&hash[..2])
-            .join(&hash[2..]);
+            .join(&hash[2..])
+    }
+
+
+    fn find_object(repo: &Repo, name: &str) -> anyhow::Result<PathBuf> {
+        if name == "HEAD"{
+            return Ok(repo.data_dir.join("HEAD"));
+        };
+
+        if name.len() == 40 {
+            let path = Self::hash_to_path(repo, name);
+            if path.is_file() {
+                return Ok(path);
+            }
+        };
+
+        if name.len() > 4{
+            let objects_dir = repo.data_dir.join("objects").join(&name[..2]);
+            if objects_dir.is_dir() {
+                let paths = fs::read_dir(objects_dir)?.filter_map(|entry|{
+                    let entry = entry.ok()?;
+                    let file_name = entry.file_name();
+                    let file_name_str = file_name.to_str()?;
+                    if file_name_str.starts_with(&name[2..]) {
+                        return Some(entry.path());
+                    }
+                    None
+                }).collect::<Vec<PathBuf>>();
+
+                if paths.len() == 1 {
+                    return Ok(paths[0].clone());
+                } else if paths.len() > 1 {
+                    anyhow::bail!("ambiguous object name: {}", name);
+                }
+            };
+
+        };
+
+        let tag = repo.get_tag_path(name);
+
+        if let Ok(tag_path) = tag {
+            let result = repo.resolve_ref(&repo.data_dir.join("tags").join(tag_path), 10).context("failed to resolve tag reference")?;
+            let result_path = Self::hash_to_path(repo, &result);
+            return Ok(PathBuf::from(result_path));
+        };
+
+        bail!("object not found: {}", name);
+
+    }
+    
+
+    pub fn read(repo: &Repo, hash: &str) -> anyhow::Result<Object> {
+        let path = Self::find_object(repo, hash)?;
 
         let content = fs::read(path).context("failed to read object file")?;
 
@@ -160,6 +211,7 @@ impl Object {
         Ok((headers, rest_str))
     }
 }
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum ObjectType {
     Blob,

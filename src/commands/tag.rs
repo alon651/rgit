@@ -52,16 +52,16 @@ pub fn simple_tag(repo: &Repo, name: String, object: Option<String>) -> anyhow::
 }
 
 pub fn complex_tag(repo: &Repo, name: String, object: Option<String>) -> anyhow::Result<()> {
-    let message = user_edit_file(&repo, "TAGANNT", "tag annotation")?;
+    let message = user_edit_file(repo, "TAGANNT", "tag annotation")?;
 
     let tagger = "alon".to_string();
     let tagger_email = "alonlevshani@gmail.com".to_string();
 
     let timestamp = Local::now();
 
-    let ref_dest = resolve_target_or_head(repo, object.clone())?;
+    let ref_dest = resolve_target_or_head(repo, object.clone())?; //todo: remove the clone
 
-    let object_type = Object::read(&repo, &ref_dest)?.object_type;
+    let object_type = Object::read(repo, &ref_dest)?.object_type;
 
     let tag = Tag::new(
         &ref_dest,
@@ -73,11 +73,11 @@ pub fn complex_tag(repo: &Repo, name: String, object: Option<String>) -> anyhow:
         Some(message),
     );
 
-    let tag_hash = tag.to_object().write(&repo)?;
+    let tag_hash = tag.to_object().write(repo)?;
 
     let tag_hash = encode(tag_hash);
 
-    simple_tag(&repo, name, Some(tag_hash))?;
+    simple_tag(repo, name, Some(tag_hash))?;
 
     Ok(())
 }

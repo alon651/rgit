@@ -1,5 +1,5 @@
 use crate::structures::object::{Object, ObjectType};
-use anyhow::Context;
+use anyhow::{Context, ensure};
 use chrono::{DateTime, Local};
 use std::fmt;
 
@@ -42,6 +42,9 @@ impl Tag {
 
     #[allow(dead_code)]
     pub fn from_object(object: &Object) -> anyhow::Result<Self> {
+        ensure!(object.object_type == ObjectType::Tag, "Object must be Tag");
+
+
         let (headers, message) = Object::parse_key_value(&object.data)?;
 
         // get the first value of a header or error
@@ -54,7 +57,7 @@ impl Tag {
 
         let object = get_required("object")?.to_string();
 
-        let object_type: ObjectType = ObjectType::from_str(&get_required("type")?)?;
+        let object_type: ObjectType = ObjectType::from_str(get_required("type")?)?;
 
         let tag_name = get_required("tag")?.to_string();
 
@@ -63,7 +66,7 @@ impl Tag {
         let (tagger_name, tagger_email, timestamp) = parse_user_line(tagger_line, "tagger")?;
 
         Ok(Self {
-            object: object,
+            object,
             object_type,
             tag_name,
             tagger_name,

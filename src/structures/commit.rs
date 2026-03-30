@@ -3,7 +3,7 @@ use crate::structures::{
     repo::Repo,
     tree::Tree,
 };
-use anyhow::{Context, bail};
+use anyhow::{Context, bail, ensure};
 use chrono::{DateTime, Local};
 use colored::Colorize;
 use hex::encode;
@@ -47,6 +47,9 @@ impl Commit {
     }
 
     pub fn from_object(object: &Object) -> anyhow::Result<Self> {
+        ensure!(object.object_type == ObjectType::Commit, "Object must be Commit");
+
+
         let (headers, message) = Object::parse_key_value(&object.data)?;
 
         // get the first value of a header or error

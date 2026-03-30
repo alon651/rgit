@@ -36,11 +36,9 @@ fn fill_refs(
 
         if path.is_dir() {
             fill_refs(repo, &path, base_path, map)?;
-        } else {
-            if let Some(content) = repo.resolve_ref(&path, 10) {
-                let display_path = path.strip_prefix(base_path)?.to_string_lossy().into_owned();
-                map.insert(display_path, content);
-            }
+        } else if let Some(content) = repo.resolve_ref(&path, 10) {
+            let display_path = path.strip_prefix(base_path)?.to_string_lossy().into_owned();
+            map.insert(display_path, content);
         }
     }
     Ok(())

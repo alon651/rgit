@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 use pager::Pager;
-use parsers::parse_sha1;
 use std::path::PathBuf;
 
 mod commands;
@@ -50,10 +49,11 @@ enum Commands {
     ///Create a new commit object
     CommitTree {
         ///An existing tree object.
-        #[arg(value_parser = parse_sha1)]
+        // #[arg(value_parser = parse_sha1)]
         tree: String,
         ///The id of a parent commit object
-        #[arg(value_parser = parse_sha1, short='p')]
+        // #[arg(value_parser = parse_sha1, short='p')]
+        #[arg(short = 'p')]
         parent: Option<String>,
         ///A paragraph in the commit log message
         #[arg(short = 'm')]
@@ -62,13 +62,13 @@ enum Commands {
     /// Show commit logs
     Log {
         /// The commit to start from (defaults to HEAD)
-        #[arg(value_parser = parse_sha1)]
+        // #[arg(value_parser = parse_sha1)]
         commit: Option<String>,
     },
     /// Unpacks a commit - like checkout
     RestoreCommit {
         /// The commit to unpack
-        #[arg(value_parser = parse_sha1)]
+        // #[arg(value_parser = parse_sha1)]
         commit: String,
         /// Where to unpack the commit
         path: PathBuf,
@@ -80,7 +80,8 @@ enum Commands {
         /// The commit hash to point to if not provided iwll list all tags
         name: Option<String>,
         /// The object to point to - can be a commit or tag if not provided will point to the current head
-        #[arg(value_parser = parse_sha1, requires = "name")]
+        // #[arg(value_parser = parse_sha1, requires = "name")]
+        #[arg(requires = "name")]
         object: Option<String>,
         /// If enabled create a full tag object
         #[arg(short = 'a', requires = "name")]
