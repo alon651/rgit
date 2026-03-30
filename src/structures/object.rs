@@ -107,7 +107,7 @@ impl Object {
         if let Ok(tag_path) = tag {
             let result = repo.resolve_ref(&repo.data_dir.join("tags").join(tag_path), 10).context("failed to resolve tag reference")?;
             let result_path = Self::hash_to_path(repo, &result);
-            return Ok(PathBuf::from(result_path));
+            return Ok(result_path);
         };
 
         bail!("object not found: {}", name);
