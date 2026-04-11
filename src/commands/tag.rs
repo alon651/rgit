@@ -32,12 +32,17 @@ pub fn exec(name: Option<String>, object: Option<String>, annonate: bool) -> any
 pub fn list_tags(repo: &Repo) -> anyhow::Result<()> {
     let tags_dir = fs::read_dir(repo.data_dir.join("refs/tags"))?;
 
+    let mut count = 0;
     for entry in tags_dir {
+        count+=1;
         let entry = entry?;
         let name = entry.file_name();
         println!("{}", name.display())
     }
+    if count == 0{
+        println!("didnt found any refs")
 
+    }
     Ok(())
 }
 
