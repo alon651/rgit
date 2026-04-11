@@ -3,7 +3,6 @@ use pager::Pager;
 use std::path::PathBuf;
 
 mod commands;
-mod parsers;
 mod structures;
 mod utils;
 
