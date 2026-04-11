@@ -67,7 +67,7 @@ impl Object {
     }
 
 
-    fn find_object(repo: &Repo, name: &str) -> anyhow::Result<PathBuf> {
+    pub fn find_object(repo: &Repo, name: &str) -> anyhow::Result<PathBuf> {
         if name == "HEAD"{
             let resolved = repo.resolve_ref(&repo.data_dir.join("HEAD"), 10).context("failed to resolve HEAD")?;
             return Ok(Self::hash_to_path(repo, &resolved));
