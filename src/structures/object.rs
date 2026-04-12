@@ -66,10 +66,11 @@ impl Object {
             .join(&hash[2..])
     }
 
-
     pub fn find_object(repo: &Repo, name: &str) -> anyhow::Result<PathBuf> {
-        if name == "HEAD"{
-            let resolved = repo.resolve_ref(&repo.data_dir.join("HEAD"), 10).context("failed to resolve HEAD")?;
+        if name == "HEAD" {
+            let resolved = repo
+                .resolve_ref(&repo.data_dir.join("HEAD"), 10)
+                .context("failed to resolve HEAD")?;
             return Ok(Self::hash_to_path(repo, &resolved));
         };
 
@@ -80,18 +81,20 @@ impl Object {
             }
         };
 
-        if name.len() >= 4{
+        if name.len() >= 4 {
             let objects_dir = repo.data_dir.join("objects").join(&name[..2]);
             if objects_dir.is_dir() {
-                let paths = fs::read_dir(objects_dir)?.filter_map(|entry|{
-                    let entry = entry.ok()?;
-                    let file_name = entry.file_name();
-                    let file_name_str = file_name.to_str()?;
-                    if file_name_str.starts_with(&name[2..]) {
-                        return Some(entry.path());
-                    }
-                    None
-                }).collect::<Vec<PathBuf>>();
+                let paths = fs::read_dir(objects_dir)?
+                    .filter_map(|entry| {
+                        let entry = entry.ok()?;
+                        let file_name = entry.file_name();
+                        let file_name_str = file_name.to_str()?;
+                        if file_name_str.starts_with(&name[2..]) {
+                            return Some(entry.path());
+                        }
+                        None
+                    })
+                    .collect::<Vec<PathBuf>>();
 
                 if paths.len() == 1 {
                     return Ok(paths[0].clone());
@@ -99,21 +102,20 @@ impl Object {
                     anyhow::bail!("ambiguous object name: {}", name);
                 }
             };
-
         };
 
         let tag = repo.get_tag_path(name);
 
         if let Ok(tag_path) = tag {
-            let result = repo.resolve_ref(&repo.data_dir.join("tags").join(tag_path), 10).context("failed to resolve tag reference")?;
+            let result = repo
+                .resolve_ref(&repo.data_dir.join("tags").join(tag_path), 10)
+                .context("failed to resolve tag reference")?;
             let result_path = Self::hash_to_path(repo, &result);
             return Ok(result_path);
         };
 
         bail!("object not found: {}", name);
-
     }
-    
 
     pub fn read(repo: &Repo, hash: &str) -> anyhow::Result<Object> {
         let path = Self::find_object(repo, hash)?;

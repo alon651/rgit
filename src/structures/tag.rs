@@ -42,8 +42,11 @@ impl Tag {
 
     #[allow(dead_code)]
     pub fn from_object(object: &Object) -> anyhow::Result<Self> {
-        ensure!(object.object_type == ObjectType::Tag, "Object must be Tag, got {}",object.object_type);
-
+        ensure!(
+            object.object_type == ObjectType::Tag,
+            "Object must be Tag, got {}",
+            object.object_type
+        );
 
         let (headers, message) = Object::parse_key_value(&object.data)?;
 

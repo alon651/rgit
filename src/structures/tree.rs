@@ -41,7 +41,11 @@ impl Tree {
     }
 
     pub fn from_object(obj: &Object) -> anyhow::Result<Self> {
-        ensure!(obj.object_type == ObjectType::Tree, "Object must be Tree, got {}",obj.object_type);
+        ensure!(
+            obj.object_type == ObjectType::Tree,
+            "Object must be Tree, got {}",
+            obj.object_type
+        );
 
         let mut entries = Vec::new();
         let mut data = &obj.data[..];

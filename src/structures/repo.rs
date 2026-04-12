@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fs::{self},
     path::{Path, PathBuf},
 };
 
@@ -106,5 +106,11 @@ impl Repo {
         } else {
             bail!("tag not found: {}", name);
         }
+    }
+
+    pub fn upsert_branch(&self, branch: &str, hash: &str) -> anyhow::Result<()> {
+        let branch_path = self.data_dir.join("refs/heads").join(branch);
+        fs::write(branch_path, hash)?;
+        Ok(())
     }
 }

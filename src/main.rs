@@ -82,6 +82,11 @@ enum Commands {
         #[arg(short = 'a', requires = "name")]
         annonate: bool,
     },
+    ///Create a branch or list all branches if name wasnt provided
+    Branch {
+        ///The branch to create, list all branches if not provided
+        name: Option<String>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -111,5 +116,6 @@ fn main() -> anyhow::Result<()> {
             object,
             annonate,
         } => commands::tag::exec(name, object, annonate),
+        Commands::Branch { name } => commands::branch::exec(name),
     }
 }
