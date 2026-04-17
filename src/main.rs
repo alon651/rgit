@@ -61,9 +61,9 @@ enum Commands {
         /// The commit to start from (defaults to HEAD)
         commit: Option<String>,
     },
-    /// Unpacks a commit - like checkout
+    /// Unpacks a commit/tag - like checkout
     RestoreCommit {
-        /// The commit to unpack
+        /// The object to unpack, a tag will resolve to a commit
         commit: String,
         /// Where to unpack the commit
         path: PathBuf,

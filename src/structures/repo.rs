@@ -110,6 +110,12 @@ impl Repo {
 
     pub fn upsert_branch(&self, branch: &str, hash: &str) -> anyhow::Result<()> {
         let branch_path = self.data_dir.join("refs/heads").join(branch);
+
+        if let Some(parent) = Path::new(&branch_path).parent() {
+            //handle cases where the branch-name have slashes like feat/implement_feature
+            fs::create_dir_all(parent)?;
+        }
+
         fs::write(branch_path, hash)?;
         Ok(())
     }

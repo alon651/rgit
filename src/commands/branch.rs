@@ -2,8 +2,8 @@ use std::fs;
 
 use crate::{structures::repo::Repo, utils::resolve_target_or_head};
 use anyhow::anyhow;
+use walkdir::WalkDir;
 
-//TODO: implement speerated branches- so a branch called feat/implement_thing will be saved in .rgit/refs/heads/feat/implement_thing
 pub fn exec(name: Option<String>) -> anyhow::Result<()> {
     let repo =
         Repo::find(&std::env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
@@ -25,11 +25,12 @@ pub fn exec(name: Option<String>) -> anyhow::Result<()> {
 
 fn list_branches(repo: &Repo) -> anyhow::Result<()> {
     let branches_dir_path = repo.data_dir.join("refs/heads");
-    let branches_dir = fs::read_dir(branches_dir_path)?;
-    for entry in branches_dir {
+    for entry in WalkDir::new(&branches_dir_path) {
         let entry = entry?;
-        let name = entry.file_name();
-        println!("{}", name.display())
+        if entry.path().is_file() {
+            let branch_name = entry.path().strip_prefix(&branches_dir_path)?;
+            println!("{}", branch_name.display())
+        }
     }
     Ok(())
 }
