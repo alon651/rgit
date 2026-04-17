@@ -2,6 +2,8 @@ use clap::{Parser, Subcommand};
 use pager::Pager;
 use std::path::PathBuf;
 
+use crate::structures::index::Index;
+
 mod commands;
 mod structures;
 mod utils;
@@ -90,6 +92,9 @@ enum Commands {
 }
 
 fn main() -> anyhow::Result<()> {
+
+    Index::read(&std::path::PathBuf::from("./.rgit/index"))?;
+
     colored::control::set_override(true);
 
     let cli = Cli::parse();
