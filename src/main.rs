@@ -2,8 +2,6 @@ use clap::{Parser, Subcommand};
 use pager::Pager;
 use std::path::PathBuf;
 
-use crate::structures::index::Index;
-
 mod commands;
 mod structures;
 mod utils;
@@ -89,10 +87,11 @@ enum Commands {
         ///The branch to create, list all branches if not provided
         name: Option<String>,
     },
+    /// List all the currently staging files
+    LsFiles {},
 }
 
 fn main() -> anyhow::Result<()> {
-
     colored::control::set_override(true);
 
     let cli = Cli::parse();
@@ -120,5 +119,6 @@ fn main() -> anyhow::Result<()> {
             annonate,
         } => commands::tag::exec(name, object, annonate),
         Commands::Branch { name } => commands::branch::exec(name),
+        Commands::LsFiles {} => commands::ls_files::exec(),
     }
 }

@@ -14,7 +14,7 @@ impl ModeType {
             0b1000 => Ok(ModeType::RegularFile),
             0b1010 => Ok(ModeType::SymbolicLink),
             0b1110 => Ok(ModeType::GitLink),
-            res => return Err(anyhow!("invalid mode {:b}", res)),
+            res => Err(anyhow!("invalid mode {:b}", res)),
         }
     }
 }
@@ -93,14 +93,18 @@ impl Index {
             let assume_valid = flags & 0b1000000000000000 != 0; // the first bit here is the assume valid bit - we take it here
 
             let extended_flag = flags >> 14 & 1;
-            ensure!(extended_flag == 0, "extended flag invalid must be 0 but {}",extended_flag);
+            ensure!(
+                extended_flag == 0,
+                "extended flag invalid must be 0 but {}",
+                extended_flag
+            );
 
             let stage = flags >> 12; // the third and fourth bits are the multilevel stage bits
             let name_len = flags & 0x0FFF; //the remaining 12 bits are the name_len
 
             idx += 62;
             let name = String::from_utf8(buf[idx..idx + (name_len as usize)].to_vec())?;
-            
+
             ensure!(
                 buf[idx + (name_len as usize)] == 0,
                 "invalid index entry name"

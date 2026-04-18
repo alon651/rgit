@@ -1,9 +1,9 @@
+use crate::structures::index::Index;
+use anyhow::{Ok, bail};
 use std::{
     fs::{self},
     path::{Path, PathBuf},
 };
-
-use anyhow::{Ok, bail};
 
 pub const DIR_NAME: &str = ".rgit";
 
@@ -118,5 +118,9 @@ impl Repo {
 
         fs::write(branch_path, hash)?;
         Ok(())
+    }
+
+    pub fn get_index(&self) -> anyhow::Result<Index> {
+        Index::read(&self.data_dir.join("index"))
     }
 }
