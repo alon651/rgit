@@ -41,7 +41,7 @@ pub enum CatFileMode {
 
 pub fn exec(hash: &str, mode: CatFileMode) -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
-    let obj = Object::read(&repo, hash)?;
+    let obj = Object::read(&repo, hash, false)?;
 
     match mode {
         CatFileMode::Pretty => std::io::stdout().write_all(&obj.data)?, //write it directly to the stdout

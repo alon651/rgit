@@ -102,7 +102,7 @@ impl Commit {
 fn unpack_tree(repo: &Repo, tree_hash: &str, path: &Path) -> anyhow::Result<()> {
     fs::create_dir_all(path)?;
 
-    let tree_obj = Object::read(repo, tree_hash)?;
+    let tree_obj = Object::read(repo, tree_hash, true)?;
     let tree = Tree::from_object(&tree_obj)?;
 
     for entry in tree.entries {
@@ -121,7 +121,7 @@ fn unpack_tree(repo: &Repo, tree_hash: &str, path: &Path) -> anyhow::Result<()> 
 }
 
 fn unpack_blob(repo: &Repo, path: &Path, hash: [u8; 20]) -> anyhow::Result<()> {
-    let obj = Object::read(repo, &encode(hash))?;
+    let obj = Object::read(repo, &encode(hash), true)?;
 
     fs::write(path, obj.data)?;
 

@@ -14,7 +14,7 @@ pub fn exec(commit: Option<String>) -> anyhow::Result<()> {
     let mut current_commit = commit;
 
     while let Some(ref hash) = current_commit {
-        let obj = Object::read(&repo, hash)?;
+        let obj = Object::read(&repo, hash, true)?;
 
         let commit_obj = Commit::from_object(&obj)?;
         let hash = obj.hash();

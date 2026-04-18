@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use std::{fs, io::Read};
 
 use crate::structures::repo::Repo;
+use crate::structures::tag::Tag;
 
 pub struct Object {
     pub data: Vec<u8>,
@@ -68,6 +69,7 @@ impl Object {
 
     pub fn find_object(repo: &Repo, name: &str) -> anyhow::Result<PathBuf> {
         if name == "HEAD" {
+            // if head resolve the head
             let resolved = repo
                 .resolve_ref(&repo.data_dir.join("HEAD"), 10)
                 .context("failed to resolve HEAD")?;
@@ -75,6 +77,7 @@ impl Object {
         };
 
         if name.len() == 40 {
+            //hash resolving
             let path = Self::hash_to_path(repo, name);
             if path.is_file() {
                 return Ok(path);
@@ -82,6 +85,7 @@ impl Object {
         };
 
         if name.len() >= 4 {
+            //hash
             let objects_dir = repo.data_dir.join("objects").join(&name[..2]);
             if objects_dir.is_dir() {
                 let paths = fs::read_dir(objects_dir)?
@@ -117,7 +121,8 @@ impl Object {
         bail!("object not found: {}", name);
     }
 
-    pub fn read(repo: &Repo, hash: &str) -> anyhow::Result<Object> {
+    /// Read an object from the data dir, if follow is provided will follow until got a objkect that is not complex tag
+    pub fn read(repo: &Repo, hash: &str, follow: bool) -> anyhow::Result<Object> {
         let path = Self::find_object(repo, hash)?;
 
         let content = fs::read(path).context("failed to read object file")?;
@@ -131,6 +136,14 @@ impl Object {
         }
 
         let obj = Self::new(body.to_vec(), ty);
+
+        if obj.object_type == ObjectType::Tag {
+            // if object is tag and follow is on rerun this
+            let tag = Tag::from_object(&obj)?;
+            if follow {
+                return Self::read(repo, &tag.object, follow);
+            }
+        }
 
         Ok(obj)
     }
@@ -213,6 +226,8 @@ impl Object {
 
         Ok((headers, rest_str))
     }
+
+    // pub fn follow
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -230,7 +245,7 @@ impl ObjectType {
             "commit" => Ok(ObjectType::Commit),
             "tree" => Ok(ObjectType::Tree),
             "tag" => Ok(ObjectType::Tag),
-            _ => Err(anyhow!("invalid object type: {}", str)),
+            _ => bail!("invalid object type: {}", str),
         }
     }
 }

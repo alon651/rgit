@@ -1,4 +1,4 @@
-use anyhow::{anyhow, ensure};
+use anyhow::{anyhow, bail, ensure};
 
 #[derive(Debug)]
 pub enum ModeType {
@@ -14,7 +14,7 @@ impl ModeType {
             0b1000 => Ok(ModeType::RegularFile),
             0b1010 => Ok(ModeType::SymbolicLink),
             0b1110 => Ok(ModeType::GitLink),
-            res => Err(anyhow!("invalid mode {:b}", res)),
+            res => bail!("invalid mode {:b}", res),
         }
     }
 }
