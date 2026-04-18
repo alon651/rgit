@@ -7,6 +7,18 @@ pub enum ModeType {
     SymbolicLink,
 }
 
+impl ModeType {
+    pub fn from_u16(val: u16) -> anyhow::Result<Self> {
+        let mode_bits = val >> 12;
+        match mode_bits {
+            0b1000 => Ok(ModeType::RegularFile),
+            0b1010 => Ok(ModeType::SymbolicLink),
+            0b1110 => Ok(ModeType::GitLink),
+            res => return Err(anyhow!("invalid mode {:b}", res)),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct IndexEntry {
     pub ctime: u32,
@@ -21,7 +33,7 @@ pub struct IndexEntry {
     pub fsize: u32,
     pub sha1: [u8; 20],
     pub assume_valid: bool,
-    pub stage: bool,
+    pub stage: u16,
     pub name: String,
 }
 
@@ -66,17 +78,11 @@ impl Index {
             let ino = u32::from_be_bytes(buf[idx + 20..idx + 24].try_into()?);
             let unused = u16::from_be_bytes(buf[idx + 24..idx + 26].try_into()?);
             ensure!(unused == 0, "invalid useless file {}", unused);
-            let mode = u16::from_be_bytes(buf[idx + 26..idx + 28].try_into()?);
+            let mode = u16::from_be_bytes(buf[idx + 26..idx + 28].try_into()?); // get 2 bytes(16 bits)
 
-            let mode_type = mode >> 12 & 0b1111;
+            let perms = mode & 0b0000000111111111; // get the bottom nine bits
 
-            let perms = mode & 0b0000000111111111;
-            let mode_type = match mode_type {
-                0b1000 => ModeType::RegularFile,
-                0b1010 => ModeType::SymbolicLink,
-                0b1110 => ModeType::GitLink,
-                h => return Err(anyhow!("invalid mode {:b} (0x{:x}, dec:{})", h, h, h)),
-            };
+            let mode_type = ModeType::from_u16(mode)?; // get the upper 4 bits, the middle 3 bits are ignroed
 
             let uid = u32::from_be_bytes(buf[idx + 28..idx + 32].try_into()?);
             let gid = u32::from_be_bytes(buf[idx + 32..idx + 36].try_into()?);
@@ -84,12 +90,17 @@ impl Index {
             let sha1_bytes: [u8; 20] = buf[idx + 40..idx + 60].try_into()?;
 
             let flags = u16::from_be_bytes(buf[idx + 60..idx + 62].try_into()?);
-            let assume_valid = flags & 0b1000000000000000 != 0;
-            let stage = flags & 0b0110000000000000 != 0;
-            let name_len = flags & 0x0FFF;
+            let assume_valid = flags & 0b1000000000000000 != 0; // the first bit here is the assume valid bit - we take it here
+
+            let extended_flag = flags >> 14 & 1;
+            ensure!(extended_flag == 0, "extended flag invalid must be 0 but {}",extended_flag);
+
+            let stage = flags >> 12; // the third and fourth bits are the multilevel stage bits
+            let name_len = flags & 0x0FFF; //the remaining 12 bits are the name_len
 
             idx += 62;
             let name = String::from_utf8(buf[idx..idx + (name_len as usize)].to_vec())?;
+            
             ensure!(
                 buf[idx + (name_len as usize)] == 0,
                 "invalid index entry name"

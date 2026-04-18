@@ -92,14 +92,6 @@ enum Commands {
 }
 
 fn main() -> anyhow::Result<()> {
-    let ind = Index::read(&std::path::PathBuf::from("./.rgit/index"))?;
-
-    println!("index entries:");
-    for entry in ind.entries {
-        println!(
-            "{:?}", entry
-        );
-    }
 
     colored::control::set_override(true);
 
