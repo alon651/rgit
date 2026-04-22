@@ -5,11 +5,13 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.102"
+bytecheck = "0.8.2"
 chrono = "0.4.44"
 clap = { version = "4.5.60", features = ["derive"] }
 colored = "3.1.1"
 flate2 = "1.1.9"
 hex = "0.4.3"
 pager = "0.16.1"
+rkyv = { version = "0.8.15", features = ["bytecheck"] }
 sha1 = "0.10.6"
 walkdir = "2.5.0"
