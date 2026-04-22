@@ -120,7 +120,16 @@ impl Repo {
         Ok(())
     }
 
+    pub fn index_path(&self) -> PathBuf {
+        self.data_dir.join("index")
+    }
+
     pub fn get_index(&self) -> anyhow::Result<Index> {
-        Index::read(&self.data_dir.join("index"))
+        let index = Index::read(&self.index_path())?;
+        Ok(index)
+    }
+
+    pub fn save_index(&self, index: Index) -> anyhow::Result<()> {
+        index.save_index(&self.index_path())
     }
 }
