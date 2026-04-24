@@ -3,9 +3,9 @@ use std::{
     path::Path,
 };
 
-use anyhow::bail;
+use anyhow::{Context, bail};
 use rkyv::{Archive, Deserialize, Serialize, access, deserialize, rancor::Error, to_bytes};
-
+use std::collections::BTreeMap;
 #[derive(Archive, Serialize, Deserialize, Debug)]
 pub enum ModeType {
     RegularFile,
@@ -45,14 +45,14 @@ pub struct IndexEntry {
 
 #[derive(Archive, Serialize, Deserialize, Debug)]
 pub struct Index {
-    pub entries: Vec<IndexEntry>,
+    pub entries: BTreeMap<String, IndexEntry>,
     pub version: u32,
 }
 
 impl Index {
     pub fn new() -> Self {
         Self {
-            entries: Vec::new(),
+            entries: BTreeMap::new(),
             version: 2,
         }
     }
@@ -62,8 +62,9 @@ impl Index {
         let mut buf = Vec::new();
         std::io::Read::read_to_end(&mut file, &mut buf)?;
 
-        let archived = access::<ArchivedIndex, Error>(&buf)?;
-        let deserialized = deserialize::<Index, Error>(archived)?;
+        let archived = access::<ArchivedIndex, Error>(&buf).context("parsing the index file")?;
+        let deserialized =
+            deserialize::<Index, Error>(archived).context("deserializing the index file")?;
         Ok(deserialized)
     }
 
@@ -71,5 +72,11 @@ impl Index {
         let bytes = to_bytes::<Error>(self)?;
         fs::write(path, bytes)?;
         Ok(())
+    }
+}
+
+impl Default for Index {
+    fn default() -> Self {
+        Self::new()
     }
 }

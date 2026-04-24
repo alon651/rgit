@@ -1,5 +1,5 @@
 use crate::structures::index::Index;
-use anyhow::{Ok, bail};
+use anyhow::{Context, Ok, bail};
 use std::{
     fs::{self},
     path::{Path, PathBuf},
@@ -125,8 +125,14 @@ impl Repo {
     }
 
     pub fn get_index(&self) -> anyhow::Result<Index> {
-        let index = Index::read(&self.index_path())?;
-        Ok(index)
+        let index_path = self.index_path();
+        if index_path.is_file() {
+            let index = Index::read(&self.index_path()).context("index file is broken")?;
+            Ok(index)
+        } else {
+            let index = Index::new();
+            Ok(index)
+        }
     }
 
     pub fn save_index(&self, index: Index) -> anyhow::Result<()> {
