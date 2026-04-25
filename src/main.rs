@@ -89,6 +89,12 @@ enum Commands {
     },
     /// List all the currently staging files
     LsFiles {},
+    /// Add file content to the index
+    Add {
+        /// files to add content from
+        #[arg(required = true)]
+        paths: Vec<PathBuf>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -120,5 +126,6 @@ fn main() -> anyhow::Result<()> {
         } => commands::tag::exec(name, object, annonate),
         Commands::Branch { name } => commands::branch::exec(name),
         Commands::LsFiles {} => commands::ls_files::exec(),
+        Commands::Add { paths } => commands::add::exec(paths),
     }
 }

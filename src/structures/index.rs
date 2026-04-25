@@ -1,5 +1,6 @@
 use std::{
-    fs::{self, File},
+    fs::{self, File, Metadata},
+    os::unix::fs::MetadataExt,
     path::Path,
 };
 
@@ -73,10 +74,36 @@ impl Index {
         fs::write(path, bytes)?;
         Ok(())
     }
+
+    pub fn insert_entry(&mut self, md: &Metadata, sha: [u8; 20], rel_path: String) {
+        let entry = IndexEntry::from_metadata(md, sha, rel_path.clone());
+        self.entries.insert(rel_path, entry);
+    }
 }
 
 impl Default for Index {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl IndexEntry {
+    fn from_metadata(md: &Metadata, sha: [u8; 20], rel_path: String) -> Self {
+        Self {
+            ctime: md.ctime() as u32,
+            mtime: md.mtime() as u32,
+            dev: md.dev() as u32,
+            ino: md.ino() as u32,
+            mode: md.mode(),
+            tp: ModeType::from_u16((md.mode() >> 12) as u16).unwrap_or(ModeType::RegularFile),
+            perms: md.mode() & 0o777,
+            uid: md.uid(),
+            gid: md.gid(),
+            fsize: md.size() as u32,
+            sha1: sha,
+            assume_valid: false,
+            stage: 0,
+            name: rel_path,
+        }
     }
 }

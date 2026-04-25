@@ -1,4 +1,8 @@
-use std::{env, fs, path::Path, process::Command};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use crate::structures::{object::Object, repo::Repo};
 
@@ -73,4 +77,15 @@ pub fn resolve_target_or_head(repo: &Repo, object: Option<String>) -> anyhow::Re
             )
         }
     }
+}
+
+pub fn get_children_of_dir(dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
+    let mut paths = Vec::new();
+    let entries = fs::read_dir(dir)?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        paths.push(path);
+    }
+    Ok(paths)
 }

@@ -1,5 +1,8 @@
-use crate::structures::index::Index;
-use anyhow::{Context, Ok, bail};
+use crate::{
+    structures::{index::Index, object::Object},
+    utils::get_children_of_dir,
+};
+use anyhow::{Context, bail};
 use std::{
     fs::{self},
     path::{Path, PathBuf},
@@ -137,5 +140,50 @@ impl Repo {
 
     pub fn save_index(&self, index: Index) -> anyhow::Result<()> {
         index.save_index(&self.index_path())
+    }
+
+    /// Add files to the repo index
+    pub fn add_paths_to_index(&self, paths: &[PathBuf]) -> anyhow::Result<()> {
+        let mut index = self.get_index()?;
+        self.index_pathspecs(paths, &mut index)?;
+        self.save_index(index)?;
+        Ok(())
+    }
+
+    fn index_pathspecs(&self, paths: &[PathBuf], index: &mut Index) -> anyhow::Result<()> {
+        for path in paths {
+            if Self::ignore(path) {
+                continue;
+            }
+
+            if path.is_dir() {
+                let children = get_children_of_dir(path)?;
+                self.index_pathspecs(&children, index)?;
+            } else {
+                self.index_pathspec(path, index)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn index_pathspec(&self, path: &Path, index: &mut Index) -> anyhow::Result<()> {
+        let rel_path = path.strip_prefix(&self.work_dir)?.to_string_lossy();
+
+        let was_indexed = index.entries.remove(rel_path.as_ref()).is_some();
+
+        match path.metadata() {
+            Ok(md) => {
+                let obj_hash = Object::write_blob_from_file(self, path)?;
+                index.insert_entry(&md, obj_hash, rel_path.into_owned());
+            }
+            Err(_) => {
+                if !was_indexed {
+                    bail!("path not found: {}", path.display()); //if wasnt found + wasnt indexed error
+                }
+            }
+        }
+
+        Ok(())
     }
 }

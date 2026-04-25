@@ -1,3 +1,4 @@
+pub mod add;
 pub mod branch;
 pub mod cat_file;
 pub mod commit_tree;

@@ -1,4 +1,4 @@
-use anyhow::{Context, anyhow, bail};
+use anyhow::{Context, bail};
 use flate2::write::ZlibEncoder;
 use flate2::{Compression, read::ZlibDecoder};
 use hex::encode;
