@@ -164,13 +164,12 @@ impl Repo {
                 // example: if src deleted and has tracked childs the remove stale entry will remove them, if not it will do nothing
                 self.index_pathspec(path, index)?;
             }
-            
+
             self.remove_stale_entries(path, index);
         }
 
         Ok(())
     }
-
 
     fn has_tracked_children(&self, path: &Path, index: &Index) -> bool {
         let Ok(rel) = path.strip_prefix(&self.work_dir) else {
@@ -183,7 +182,6 @@ impl Repo {
         let prefix = format!("{}/", rel.trim_end_matches('/'));
         index.entries.keys().any(|k| k.starts_with(&prefix))
     }
-
 
     fn remove_stale_entries(&self, path: &Path, index: &mut Index) {
         // drop index entries whose files deleted from disk.
@@ -224,6 +222,31 @@ impl Repo {
                 if !was_indexed {
                     bail!("path not found: {}", path.display()); //if wasnt found + wasnt indexed error
                 }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn remove_paths_from_index(&self, paths: &[PathBuf]) -> anyhow::Result<()> {
+        let mut index = self.get_index()?;
+        self.remove_pathspecs(paths, &mut index)?;
+        self.save_index(index)?;
+        Ok(())
+    }
+
+    fn remove_pathspecs(&self, paths: &[PathBuf], index: &mut Index) -> anyhow::Result<()> {
+        for path in paths {
+            if Self::ignore(path) {
+                continue;
+            }
+
+            if path.is_dir() {
+                let children = get_children_of_dir(path)?;
+                self.remove_pathspecs(&children, index)?;
+            } else if path.is_file() || !self.has_tracked_children(path, index) {
+                let rel_path = path.strip_prefix(&self.work_dir)?.to_string_lossy();
+                index.entries.remove(rel_path.as_ref());
             }
         }
 

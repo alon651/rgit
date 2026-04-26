@@ -95,6 +95,12 @@ enum Commands {
         #[arg(required = true)]
         paths: Vec<PathBuf>,
     },
+    /// Remove files from index
+    Rm {
+        /// files to remove from index
+        #[arg(required = true)]
+        paths: Vec<PathBuf>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -127,5 +133,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Branch { name } => commands::branch::exec(name),
         Commands::LsFiles {} => commands::ls_files::exec(),
         Commands::Add { paths } => commands::add::exec(paths),
+        Commands::Rm { paths } => commands::rm::exec(paths),
     }
 }
