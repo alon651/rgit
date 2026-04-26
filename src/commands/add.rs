@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-use anyhow::{anyhow, ensure};
+use anyhow::anyhow;
 
 use crate::structures::repo::Repo;
 

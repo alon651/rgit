@@ -159,12 +159,55 @@ impl Repo {
             if path.is_dir() {
                 let children = get_children_of_dir(path)?;
                 self.index_pathspecs(&children, index)?;
-            } else {
+            } else if path.is_file() || !self.has_tracked_children(path, index) {
+                // index_pathspec would error for deleted dirs with tracked children, will only reach this path for deleted dirs
+                // example: if src deleted and has tracked childs the remove stale entry will remove them, if not it will do nothing
                 self.index_pathspec(path, index)?;
             }
+            
+            self.remove_stale_entries(path, index);
         }
 
         Ok(())
+    }
+
+
+    fn has_tracked_children(&self, path: &Path, index: &Index) -> bool {
+        let Ok(rel) = path.strip_prefix(&self.work_dir) else {
+            return false;
+        };
+        let rel = rel.to_string_lossy();
+        if rel.is_empty() {
+            return !index.entries.is_empty();
+        }
+        let prefix = format!("{}/", rel.trim_end_matches('/'));
+        index.entries.keys().any(|k| k.starts_with(&prefix))
+    }
+
+
+    fn remove_stale_entries(&self, path: &Path, index: &mut Index) {
+        // drop index entries whose files deleted from disk.
+        let Ok(rel) = path.strip_prefix(&self.work_dir) else {
+            return;
+        };
+        let rel = rel.to_string_lossy();
+
+        let prefix = if rel.is_empty() {
+            String::new()
+        } else {
+            format!("{}/", rel.trim_end_matches('/'))
+        };
+
+        let to_remove: Vec<String> = index
+            .entries
+            .keys()
+            .filter(|k| k.starts_with(&prefix) && !self.work_dir.join(k).exists())
+            .cloned()
+            .collect();
+
+        for key in to_remove {
+            index.entries.remove(&key);
+        }
     }
 
     fn index_pathspec(&self, path: &Path, index: &mut Index) -> anyhow::Result<()> {
