@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::Write};
+use std::{collections::HashMap, fmt::Display, io::Write, path::PathBuf};
 
 use anyhow::{Context, anyhow, bail, ensure};
 use hex::encode;
@@ -88,6 +88,32 @@ impl Tree {
 
         Object::new(content, ObjectType::Tree).write(repo)
     }
+
+    pub fn flatten(
+        &self,
+        repo: &Repo,
+        prefix: Option<&str>,
+    ) -> anyhow::Result<HashMap<PathBuf, String>> {
+        let mut map = HashMap::new();
+
+        for entry in &self.entries {
+            let path = match prefix {
+                Some(prefix) => format!("{}/{}", prefix, entry.name),
+                None => entry.name.clone(),
+            };
+            let hash = encode(entry.hash);
+
+            if entry.is_tree() {
+                let sub_obj = Object::read(repo, &hash, true)?;
+                let sub_tree = Tree::from_object(&sub_obj)?;
+                map.extend(sub_tree.flatten(repo, Some(&path))?);
+            } else {
+                map.insert(PathBuf::from(path), hash);
+            }
+        }
+
+        Ok(map)
+    }
 }
 
 impl Display for Tree {
@@ -95,6 +121,12 @@ impl Display for Tree {
         self.entries
             .iter()
             .try_for_each(|entry| writeln!(f, "{}", entry))
+    }
+}
+
+impl TreeEntry {
+    pub fn is_tree(&self) -> bool {
+        self.mode == 0o40000
     }
 }
 
