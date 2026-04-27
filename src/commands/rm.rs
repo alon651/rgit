@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, fs};
 
 use anyhow::anyhow;
 
@@ -14,6 +14,12 @@ pub fn exec(paths: Vec<PathBuf>) -> anyhow::Result<()> {
     }
 
     repo.remove_paths_from_index(&abs_paths)?;
+
+    abs_paths.iter().for_each(|path| {
+        if path.exists() {
+            fs::remove_file(path).unwrap();
+        }
+    });
 
     Ok(())
 }
