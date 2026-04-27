@@ -252,4 +252,18 @@ impl Repo {
 
         Ok(())
     }
+
+    pub fn get_branch(&self) -> anyhow::Result<Option<String>> {
+        let head_str = fs::read_to_string(self.data_dir.join("HEAD"))?;
+
+        if let Some(branch) = head_str.trim().strip_prefix("ref: ") {
+            let true_branch = branch
+                .strip_prefix("refs/heads/")
+                .context("head is corrupted")?;
+
+            Ok(Some(true_branch.to_owned()))
+        } else {
+            Ok(None)
+        }
+    }
 }

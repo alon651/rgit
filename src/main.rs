@@ -101,6 +101,8 @@ enum Commands {
         #[arg(required = true)]
         paths: Vec<PathBuf>,
     },
+    /// Show the working tree status
+    Status {},
 }
 
 fn main() -> anyhow::Result<()> {
@@ -134,5 +136,6 @@ fn main() -> anyhow::Result<()> {
         Commands::LsFiles {} => commands::ls_files::exec(),
         Commands::Add { paths } => commands::add::exec(paths),
         Commands::Rm { paths } => commands::rm::exec(paths),
+        Commands::Status {} => commands::status::exec(),
     }
 }

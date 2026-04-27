@@ -10,5 +10,6 @@ pub mod ls_tree;
 pub mod restore_commit;
 pub mod rm;
 pub mod show_ref;
+pub mod status;
 pub mod tag;
 pub mod write_tree;
