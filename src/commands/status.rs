@@ -25,27 +25,27 @@ struct Diff {
 pub fn exec() -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
 
-    let branch = repo
-        .get_branch()?
-        .ok_or_else(|| anyhow!("no branch found"))?;
-    println!("on branch: {}", branch);
+    let commit = resolve_head_commit(&repo);
 
-    let commit = resolve_head_commit(&repo)?;
     let index = repo.get_index().context("failed to read the index")?;
 
-    let committed = flatten_committed_files(&repo, &commit)?;
+    if let Ok(commit) = &commit {
+        let committed = flatten_committed_files(&repo, &commit)?;
 
-    let diff = diff_index_with_tree(&index, &committed);
+        let diff = diff_index_with_tree(&index, &committed);
 
-    print_sections(&[
-        ("modified", &diff.modified),
-        ("added", &diff.added),
-        ("deleted", &diff.deleted),
-    ]);
+        print_sections(&[
+            ("modified", &diff.modified),
+            ("added", &diff.added),
+            ("deleted", &diff.deleted),
+        ]);
+
+        println!(); // separator between staged and unstaged changes
+
+    }
 
     let staged_diff = dif_disk_with_index(&repo, &index)?;
 
-    println!(); // separator between staged and unstaged changes
     print_sections(&[
         ("modified but not staged", &staged_diff.modified),
         ("added but not staged", &staged_diff.added),
