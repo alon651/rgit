@@ -1,17 +1,16 @@
 use std::env;
 
-use anyhow::{anyhow, bail};
+use anyhow::anyhow;
 
-use crate::structures::{commit::Commit, object::Object, repo::Repo};
+use crate::{
+    structures::{commit::Commit, object::Object, repo::Repo},
+    utils::resolve_target_or_head,
+};
 
 pub fn exec(commit: Option<String>) -> anyhow::Result<()> {
-    if commit.is_none() {
-        bail!("logging the head is not yet implemented")
-    };
-
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
 
-    let mut current_commit = commit;
+    let mut current_commit = commit.or(Some(resolve_target_or_head(&repo, None)?));
 
     while let Some(ref hash) = current_commit {
         let obj = Object::read(&repo, hash, true)?;

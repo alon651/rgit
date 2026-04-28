@@ -25,12 +25,12 @@ struct Diff {
 pub fn exec() -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
 
-    let commit = resolve_head_commit(&repo);
+    let commit = repo.get_head_commit();
 
     let index = repo.get_index().context("failed to read the index")?;
 
     if let Ok(commit) = &commit {
-        let committed = flatten_committed_files(&repo, &commit)?;
+        let committed = flatten_committed_files(&repo, commit)?;
 
         let diff = diff_index_with_tree(&index, &committed);
 
@@ -41,7 +41,6 @@ pub fn exec() -> anyhow::Result<()> {
         ]);
 
         println!(); // separator between staged and unstaged changes
-
     }
 
     let staged_diff = dif_disk_with_index(&repo, &index)?;
@@ -53,15 +52,6 @@ pub fn exec() -> anyhow::Result<()> {
     ]);
 
     Ok(())
-}
-
-fn resolve_head_commit(repo: &Repo) -> anyhow::Result<Commit> {
-    let head_ref = repo.get_head()?;
-    let commit_hash = repo
-        .resolve_ref(Path::new(&head_ref), 10)
-        .context("failed to resolve commit from branch")?;
-    let obj = Object::read(repo, &commit_hash, true)?;
-    Commit::from_object(&obj)
 }
 
 fn flatten_committed_files(
@@ -142,16 +132,15 @@ fn dif_disk_with_index(repo: &Repo, index: &Index) -> anyhow::Result<Diff> {
             added.push(relative_str);
         } else {
             let index_entry = &index.entries[&relative_str];
-            if metadata.mtime() > index_entry.mtime as i64 {
-                if let Ok(true) = file_hash_changed(repo, relative, index_entry) {
+            if metadata.mtime() > index_entry.mtime as i64
+                && let Ok(true) = file_hash_changed(repo, relative, index_entry) {
                     modified.push(relative_str);
                 }
-            }
         }
     }
 
     // check for files in the index that no longer exist on disk
-    for (path, _entry) in &index.entries {
+    for path in index.entries.keys() {
         let relative = Path::new(&path);
         if !repo.work_dir.join(relative).exists() {
             deleted.push(path.clone());
