@@ -8,6 +8,7 @@ anyhow = "1.0.102"
 bytecheck = "0.8.2"
 chrono = "0.4.44"
 clap = { version = "4.5.60", features = ["derive"] }
+clap_complete = "4.6.3"
 colored = "3.1.1"
 flate2 = "1.1.9"
 hex = "0.4.3"

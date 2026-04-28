@@ -1,6 +1,7 @@
-use clap::{Parser, Subcommand};
+use clap::{Command, Parser, Subcommand, CommandFactory};
 use pager::Pager;
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
+use clap_complete::aot::{generate, Generator, Shell};
 
 mod commands;
 mod structures;
@@ -8,15 +9,21 @@ mod utils;
 
 /// a git clone written in rust
 #[derive(Parser)]
-#[command(name = "rvcs")]
+#[command(name = "rgit")]
 #[command(version,about,long_about = None)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Generate shell completion scripts
+    #[command(hide = true)]
+    Completions {
+        #[arg(value_enum)]
+        shell: Shell,
+    },
     ///Initialize the repo
     Init {
         ///Data dir location
@@ -103,6 +110,11 @@ enum Commands {
     },
     /// Show the working tree status
     Status {},
+    /// Commit changes to the repository
+    Commit{
+        #[arg(short = 'm')]
+        message: Option<String>,
+    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -111,6 +123,12 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Completions { shell } => {
+            let mut cmd = Cli::command();
+            let name = cmd.get_name().to_string(); // avoid borrow conflict
+            generate(shell, &mut cmd, name, &mut io::stdout());
+            Ok(())
+        },
         Commands::Init { path } => commands::init::exec(path),
         Commands::CatFile { hash, mode } => commands::cat_file::exec(&hash, mode.to_mode()),
         Commands::HashObject { path, write } => commands::hash_object::exec(path, write),
@@ -137,5 +155,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Add { paths } => commands::add::exec(paths),
         Commands::Rm { paths } => commands::rm::exec(paths),
         Commands::Status {} => commands::status::exec(),
+        Commands::Commit { message } => commands::commit::exec(message)
     }
 }
