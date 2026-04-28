@@ -1,6 +1,7 @@
 pub mod add;
 pub mod branch;
 pub mod cat_file;
+pub mod commit;
 pub mod commit_tree;
 pub mod hash_object;
 pub mod init;
@@ -13,4 +14,3 @@ pub mod show_ref;
 pub mod status;
 pub mod tag;
 pub mod write_tree;
-pub mod commit;

@@ -1,3 +1,47 @@
-pub fn exec(message: Option<String>)-> anyhow::Result<()>{
-    Ok(())   
+use std::{collections::HashMap, env, path::Path};
+
+use chrono::Local;
+
+use crate::{structures::repo::Repo, utils::user_edit_file};
+use anyhow::{Ok, anyhow};
+
+pub fn exec(message: Option<String>) -> anyhow::Result<()> {
+    let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
+
+    let author = "alon".to_string();
+    let email = "alonlevshani@gmail.com".to_string();
+
+    let timestamp = Local::now();
+
+    let message = match message {
+        Some(message) => message,
+        None => user_edit_file(&repo, "COMMITMSG", "commit message")?,
+    };
+
+    // println!("{}",hm)
+    tree_from_index(&repo)?;
+
+    Ok(())
+}
+
+pub fn tree_from_index(repo: &Repo) -> anyhow::Result<()> {
+    let index = repo.get_index()?;
+
+    let mut hm = HashMap::new();
+
+    for entry in index.entries.keys() {
+        let entry_parent = Path::new(entry).parent();
+        let Some(entry_parent) = entry_parent else { continue };
+        hm.insert(entry_parent, 8);
+    }
+
+    let mut keys: Vec<_> = hm.keys().collect();
+
+    keys.sort_by_key(|k| k.display().to_string().len());
+
+    keys.iter().for_each(|a| {
+        println!("{}",a.display())
+    });
+    // Ok(tree)
+    Ok(())
 }
