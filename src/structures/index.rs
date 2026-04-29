@@ -7,7 +7,7 @@ use std::{
 use anyhow::{Context, bail};
 use rkyv::{Archive, Deserialize, Serialize, access, deserialize, rancor::Error, to_bytes};
 use std::collections::BTreeMap;
-#[derive(Archive, Serialize, Deserialize, Debug)]
+#[derive(Archive, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub enum ModeType {
     RegularFile,
     GitLink,
@@ -26,7 +26,7 @@ impl ModeType {
     }
 }
 
-#[derive(Archive, Serialize, Deserialize, Debug)]
+#[derive(Archive, Serialize, Deserialize, Debug, PartialEq, Eq, Hash)]
 pub struct IndexEntry {
     pub ctime: u32,
     pub mtime: u32,

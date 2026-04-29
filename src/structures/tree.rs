@@ -114,7 +114,6 @@ impl Tree {
 
         Ok(map)
     }
-
 }
 
 impl Display for Tree {
