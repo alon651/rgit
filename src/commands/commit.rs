@@ -1,6 +1,7 @@
 use std::{collections::HashMap, env, path::Path};
 
 use chrono::Local;
+use hex::encode;
 
 use crate::{structures::repo::Repo, utils::user_edit_file};
 use anyhow::{Ok, anyhow};
@@ -29,19 +30,28 @@ pub fn tree_from_index(repo: &Repo) -> anyhow::Result<()> {
 
     let mut hm = HashMap::new();
 
-    for entry in index.entries.keys() {
-        let entry_parent = Path::new(entry).parent();
-        let Some(entry_parent) = entry_parent else { continue };
-        hm.insert(entry_parent, 8);
+    for (path, entry) in index.entries {
+        let entry_parent = Path::new(&path).parent();
+        let Some(entry_parent) = entry_parent.clone() else { continue };
+        // hm.insert(entry_parent.to_path_buf(), entry);
+        hm.entry(entry_parent.to_path_buf()).or_insert(Vec::new()).push(entry);
     }
 
     let mut keys: Vec<_> = hm.keys().collect();
 
     keys.sort_by_key(|k| k.display().to_string().len());
 
+    keys.reverse();
+    // hm[&repo.work_dir].
+
+
     keys.iter().for_each(|a| {
-        println!("{}",a.display())
+        for entry in &hm[*a] {
+            println!("{} {} {}", entry.mode, encode(entry.sha1), entry.name);
+        }
     });
+
     // Ok(tree)
+
     Ok(())
 }
