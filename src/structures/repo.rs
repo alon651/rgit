@@ -1,5 +1,5 @@
 use crate::{
-    structures::{commit::Commit, index::Index, object::Object},
+    structures::{index::Index, object::Object},
     utils::get_children_of_dir,
 };
 use anyhow::{Context, bail};
@@ -253,7 +253,6 @@ impl Repo {
         Ok(())
     }
 
-    #[allow(dead_code)]
     pub fn get_branch(&self) -> anyhow::Result<Option<String>> {
         let head_str = fs::read_to_string(self.data_dir.join("HEAD"))?;
 
@@ -268,12 +267,10 @@ impl Repo {
         }
     }
 
-    pub fn get_head_commit(&self) -> anyhow::Result<Commit> {
-        let head_ref = self.get_head()?;
-        let commit_hash = self
-            .resolve_ref(Path::new(&head_ref), 10)
-            .context("failed to resolve commit from branch")?;
-        let obj = Object::read(self, &commit_hash, true)?;
-        Commit::from_object(&obj)
+    pub fn is_currently_at_branch(&self) -> bool {
+        match self.get_branch() {
+            Ok(f) => f.is_some(),
+            Err(_) => false,
+        }
     }
 }
