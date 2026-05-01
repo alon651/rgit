@@ -1,29 +1,32 @@
 use std::{
     collections::HashMap,
-    env,
+    env, fs,
     path::{Path, PathBuf},
 };
 
 use chrono::Local;
+use hex::encode;
 
 use crate::{
     structures::{
+        commit::Commit,
         repo::Repo,
         tree::{Tree, TreeEntry},
     },
-    utils::user_edit_file,
+    utils::{resolve_target_or_head, user_edit_file},
 };
-use anyhow::{Ok, anyhow};
+
+use anyhow::{Ok, anyhow, bail};
 
 pub fn exec(message: Option<String>) -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
 
-    let _author = "alon".to_string();
-    let _email = "alonlevshani@gmail.com".to_string();
+    let author = "alon".to_string();
+    let email = "alonlevshani@gmail.com".to_string();
 
-    let _timestamp = Local::now();
+    let timestamp = Local::now();
 
-    let _message = match message {
+    let message = match message {
         Some(message) => message,
         None => user_edit_file(&repo, "COMMITMSG", "commit message")?,
     };
@@ -31,7 +34,30 @@ pub fn exec(message: Option<String>) -> anyhow::Result<()> {
     let root_sha = tree_from_index(&repo)?;
     println!("root tree: {}", hex::encode(root_sha));
 
-    
+    let parent = resolve_target_or_head(&repo, None).ok();
+
+    let commit = Commit::new(
+        encode(root_sha),
+        parent,
+        author.clone(),
+        author,
+        email,
+        timestamp,
+        Some(message),
+    );
+
+    let hash = commit.to_object().write(&repo)?;
+
+    let hash_str = encode(hash);
+
+    if repo.is_currently_at_branch() {
+        let branch_path = repo.get_head()?;
+        fs::write(repo.data_dir.join(branch_path), hash_str)?;
+    } else {
+        bail!("writing commit to a detached head not supported")
+    }
+
+    println!("{}", encode(hash));
 
     Ok(())
 }
