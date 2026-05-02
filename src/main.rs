@@ -115,6 +115,14 @@ enum Commands {
         #[arg(short = 'm')]
         message: Option<String>,
     },
+    /// Switch branches or restore working tree files
+    Checkout {
+        ///If provided will create a path with the target name as branch name
+        #[arg(short = 'b')]
+        create_branch: bool,
+        /// The hash or refname or branch name to switch to
+        target: String,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -140,7 +148,7 @@ fn main() -> anyhow::Result<()> {
             message,
         } => commands::commit_tree::exec(tree, parent, message),
         Commands::Log { commit } => {
-            Pager::with_pager("less -FXR").setup();
+            Pager::with_pager("less -FR").setup();
             commands::log::exec(commit)
         }
         Commands::RestoreCommit { commit, path } => commands::restore_commit::exec(commit, &path),
@@ -156,5 +164,9 @@ fn main() -> anyhow::Result<()> {
         Commands::Rm { paths } => commands::rm::exec(paths),
         Commands::Status {} => commands::status::exec(),
         Commands::Commit { message } => commands::commit::exec(message),
+        Commands::Checkout {
+            create_branch,
+            target,
+        } => commands::checkout::exec(&target, create_branch),
     }
 }

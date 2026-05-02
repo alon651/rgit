@@ -1,6 +1,6 @@
 use crate::{
-    structures::{index::Index, object::Object},
-    utils::get_children_of_dir,
+    structures::{diff::{Diff, flatten_committed_files}, index::Index, object::Object},
+    utils::{get_children_of_dir, resolve_target_or_head},
 };
 use anyhow::{Context, bail};
 use std::{
@@ -272,5 +272,18 @@ impl Repo {
             Ok(f) => f.is_some(),
             Err(_) => false,
         }
+    }
+
+    pub fn is_working_tree_clean(&self) -> anyhow::Result<bool> {
+        let index = self.get_index()?;
+        let diff = Diff::from_working_tree_and_index(&self, &index)?;
+
+        let commit = resolve_target_or_head(self,None)?;
+
+        let hm = flatten_committed_files(self, &commit)?;
+
+        let diff2 = Diff::from_index_and_repo(&index, &hm);
+
+        Ok(diff.is_empty() && diff2.is_empty())
     }
 }

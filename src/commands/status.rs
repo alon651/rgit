@@ -1,10 +1,10 @@
+use crate::structures::{commit::Commit, diff::{Diff, flatten_committed_files}, object::Object, repo::Repo, tree::Tree};
 use anyhow::{Context, anyhow};
 use std::{
     collections::HashMap,
     env,
     path::{Path, PathBuf},
 };
-use crate::structures::{commit::Commit, diff::Diff, object::Object, repo::Repo, tree::Tree};
 
 pub fn exec() -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
@@ -53,14 +53,6 @@ pub fn exec() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn flatten_committed_files(repo: &Repo, commit: &str) -> anyhow::Result<HashMap<PathBuf, String>> {
-    let commit_obj = Object::read(repo, commit, true)?;
-    let commit = Commit::from_object(&commit_obj)?;
-
-    let obj = Object::read(repo, &commit.tree, true)?;
-    let tree = Tree::from_object(&obj)?;
-    tree.flatten(repo, None)
-}
 
 fn print_sections(sections: &[(&str, &[String])]) {
     let visible: Vec<_> = sections

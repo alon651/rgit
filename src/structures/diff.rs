@@ -3,9 +3,7 @@ use hex::encode;
 use walkdir::WalkDir;
 
 use crate::structures::{
-    index::Index,
-    object::{Object, ObjectType},
-    repo::Repo,
+    commit::Commit, index::Index, object::{Object, ObjectType}, repo::Repo, tree::Tree
 };
 
 use std::{
@@ -72,9 +70,8 @@ impl Diff {
         })
     }
 
-
     /// Diffs the index and the saved tree in the repo
-    pub fn from_index_and_repo(index: &Index, committed: &HashMap<PathBuf, String>) -> Diff { 
+    pub fn from_index_and_repo(index: &Index, committed: &HashMap<PathBuf, String>) -> Diff {
         let mut modified = Vec::new();
         let mut added = Vec::new();
         let mut deleted = Vec::new();
@@ -105,7 +102,7 @@ impl Diff {
         }
     }
 
-    pub fn is_empty(&self) ->bool{
+    pub fn is_empty(&self) -> bool {
         self.added.is_empty() && self.modified.is_empty() && self.deleted.is_empty()
     }
 }
@@ -118,4 +115,14 @@ fn file_hash_changed(
     let content = fs::read(repo.work_dir.join(relative)).context("failed to read object file")?;
     let object = Object::new(content, ObjectType::Blob);
     Ok(index_entry.sha1 != object.hash())
+}
+
+
+pub fn flatten_committed_files(repo: &Repo, commit: &str) -> anyhow::Result<HashMap<PathBuf, String>> {
+    let commit_obj = Object::read(repo, commit, true)?;
+    let commit = Commit::from_object(&commit_obj)?;
+
+    let obj = Object::read(repo, &commit.tree, true)?;
+    let tree = Tree::from_object(&obj)?;
+    tree.flatten(repo, None)
 }
