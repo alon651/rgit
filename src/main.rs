@@ -1,7 +1,7 @@
-use clap::{Command, Parser, Subcommand, CommandFactory};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::aot::{Shell, generate};
 use pager::Pager;
 use std::{io, path::PathBuf};
-use clap_complete::aot::{generate, Generator, Shell};
 
 mod commands;
 mod structures;
@@ -111,10 +111,10 @@ enum Commands {
     /// Show the working tree status
     Status {},
     /// Commit changes to the repository
-    Commit{
+    Commit {
         #[arg(short = 'm')]
         message: Option<String>,
-    }
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -128,7 +128,7 @@ fn main() -> anyhow::Result<()> {
             let name = cmd.get_name().to_string(); // avoid borrow conflict
             generate(shell, &mut cmd, name, &mut io::stdout());
             Ok(())
-        },
+        }
         Commands::Init { path } => commands::init::exec(path),
         Commands::CatFile { hash, mode } => commands::cat_file::exec(&hash, mode.to_mode()),
         Commands::HashObject { path, write } => commands::hash_object::exec(path, write),
@@ -155,6 +155,6 @@ fn main() -> anyhow::Result<()> {
         Commands::Add { paths } => commands::add::exec(paths),
         Commands::Rm { paths } => commands::rm::exec(paths),
         Commands::Status {} => commands::status::exec(),
-        Commands::Commit { message } => commands::commit::exec(message)
+        Commands::Commit { message } => commands::commit::exec(message),
     }
 }

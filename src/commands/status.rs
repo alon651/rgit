@@ -25,7 +25,22 @@ struct Diff {
 pub fn exec() -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
 
-    let commit = repo.get_head_commit();
+    let branch = repo.get_branch()?;
+
+    let commit = repo
+        .resolve_ref(Path::new(&"HEAD"), 10)
+        .context("failed to resolve commit from branch");
+
+    match branch {
+        Some(branch) => println!("repo at branch {}", branch),
+        None => {
+            if let Ok(commit) = &commit {
+                println!("HEAD Detached at commit {}", commit);
+            } else {
+                println!()
+            }
+        }
+    };
 
     let index = repo.get_index().context("failed to read the index")?;
 
@@ -54,10 +69,10 @@ pub fn exec() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn flatten_committed_files(
-    repo: &Repo,
-    commit: &Commit,
-) -> anyhow::Result<HashMap<PathBuf, String>> {
+fn flatten_committed_files(repo: &Repo, commit: &str) -> anyhow::Result<HashMap<PathBuf, String>> {
+    let commit_obj = Object::read(repo, commit, true)?;
+    let commit = Commit::from_object(&commit_obj)?;
+
     let obj = Object::read(repo, &commit.tree, true)?;
     let tree = Tree::from_object(&obj)?;
     tree.flatten(repo, None)
@@ -132,10 +147,11 @@ fn dif_disk_with_index(repo: &Repo, index: &Index) -> anyhow::Result<Diff> {
             added.push(relative_str);
         } else {
             let index_entry = &index.entries[&relative_str];
-            if metadata.mtime() > index_entry.mtime as i64
-                && let Ok(true) = file_hash_changed(repo, relative, index_entry) {
+            if metadata.mtime() > index_entry.mtime as i64 {
+                if let Ok(true) = file_hash_changed(repo, relative, index_entry) {
                     modified.push(relative_str);
                 }
+            }
         }
     }
 
