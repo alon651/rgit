@@ -32,10 +32,7 @@ pub fn exec(message: Option<String>) -> anyhow::Result<()> {
     };
 
     let root_sha = tree_from_index(&repo)?;
-    println!("root tree: {}", hex::encode(root_sha));
-
     let parent = resolve_target_or_head(&repo, None).ok();
-
     let commit = Commit::new(
         encode(root_sha),
         parent,
@@ -56,8 +53,6 @@ pub fn exec(message: Option<String>) -> anyhow::Result<()> {
     } else {
         bail!("writing commit to a detached head not supported")
     }
-
-    println!("{}", encode(hash));
 
     Ok(())
 }

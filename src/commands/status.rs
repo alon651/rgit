@@ -41,7 +41,6 @@ pub fn exec() -> anyhow::Result<()> {
             }
         }
     };
-    println!();
 
     let index = repo.get_index().context("failed to read the index")?;
 
