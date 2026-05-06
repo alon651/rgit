@@ -71,7 +71,7 @@ pub fn resolve_target_or_head(repo: &Repo, object: Option<String>) -> anyhow::Re
             Ok(format!("{}{}", dir, file_name))
         }
         None => {
-            let head = repo.get_head()?;
+            let head = "HEAD";
             repo.resolve_ref(Path::new(&head), 10).context(
                 "Could not resolve HEAD reference. Ensure the repository has at least one commit.",
             )

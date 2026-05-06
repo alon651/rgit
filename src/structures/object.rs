@@ -85,27 +85,9 @@ impl Object {
         };
 
         if name.len() >= 4 {
-            //hash
-            let objects_dir = repo.data_dir.join("objects").join(&name[..2]);
-            if objects_dir.is_dir() {
-                let paths = fs::read_dir(objects_dir)?
-                    .filter_map(|entry| {
-                        let entry = entry.ok()?;
-                        let file_name = entry.file_name();
-                        let file_name_str = file_name.to_str()?;
-                        if file_name_str.starts_with(&name[2..]) {
-                            return Some(entry.path());
-                        }
-                        None
-                    })
-                    .collect::<Vec<PathBuf>>();
-
-                if paths.len() == 1 {
-                    return Ok(paths[0].clone());
-                } else if paths.len() > 1 {
-                    anyhow::bail!("ambiguous object name: {}", name);
-                }
-            };
+            if let Some(path) = Self::expand_object_hash(repo, name)? {
+                return Ok(path);
+            }
         };
 
         let tag = repo.get_tag_path(name);
@@ -117,6 +99,16 @@ impl Object {
             let result_path = Self::hash_to_path(repo, &result);
             return Ok(result_path);
         };
+
+        let branch_path = repo.get_branch_by_name(name);
+
+        if repo.data_dir.join(&branch_path).is_file() {
+            let result = repo
+                .resolve_ref(&branch_path, 10)
+                .context("failed to resolve branch reference")?;
+            let result_path = Self::hash_to_path(repo, &result);
+            return Ok(result_path);
+        }
 
         bail!("object not found: {}", name);
     }
@@ -227,7 +219,46 @@ impl Object {
         Ok((headers, rest_str))
     }
 
-    // pub fn follow
+    /// returns if the object is not a hash or its a refrence
+    pub fn is_refrence(repo: &Repo, name: &str) -> Option<PathBuf> {
+        let tag = repo.get_tag_path(name);
+
+        if let Ok(tag_path) = tag {
+            return Some(tag_path);
+        };
+
+        let branch_path = repo.get_branch_by_name(name);
+
+        if repo.data_dir.join(&branch_path).is_file() {
+            return Some(branch_path);
+        }
+
+        None
+    }
+
+    pub fn expand_object_hash(repo: &Repo, name: &str) -> anyhow::Result<Option<PathBuf>> {
+        let objects_dir = repo.data_dir.join("objects").join(&name[..2]);
+        if objects_dir.is_dir() {
+            let paths = fs::read_dir(objects_dir)?
+                .filter_map(|entry| {
+                    let entry = entry.ok()?;
+                    let file_name = entry.file_name();
+                    let file_name_str = file_name.to_str()?;
+                    if file_name_str.starts_with(&name[2..]) {
+                        return Some(entry.path());
+                    }
+                    None
+                })
+                .collect::<Vec<PathBuf>>();
+
+            if paths.len() == 1 {
+                return Ok(Some(paths[0].clone()));
+            } else if paths.len() > 1 {
+                anyhow::bail!("ambiguous object name: {}", name);
+            }
+        };
+        Ok(None)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]

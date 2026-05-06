@@ -108,7 +108,7 @@ fn unpack_tree(repo: &Repo, tree_hash: &str, path: &Path) -> anyhow::Result<()> 
     for entry in tree.entries {
         match entry.mode {
             0o100644 | 0o100755 | 0o120000 => {
-                unpack_blob(repo, &path.join(entry.name), entry.hash)?;
+                unpack_blob(repo, &path.join(entry.name), &encode(entry.hash))?;
             }
             0o40000 => {
                 unpack_tree(repo, &encode(entry.hash), &path.join(entry.name))?;
@@ -120,8 +120,8 @@ fn unpack_tree(repo: &Repo, tree_hash: &str, path: &Path) -> anyhow::Result<()> 
     Ok(())
 }
 
-fn unpack_blob(repo: &Repo, path: &Path, hash: [u8; 20]) -> anyhow::Result<()> {
-    let obj = Object::read(repo, &encode(hash), true)?;
+pub fn unpack_blob(repo: &Repo, path: &Path, hash: &str) -> anyhow::Result<()> {
+    let obj = Object::read(repo, hash, true)?;
 
     fs::write(path, obj.data)?;
 

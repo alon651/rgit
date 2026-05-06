@@ -1,5 +1,9 @@
 use crate::{
-    structures::{diff::{Diff, flatten_committed_files}, index::Index, object::Object},
+    structures::{
+        diff::{Diff, flatten_committed_files},
+        index::Index,
+        object::Object,
+    },
     utils::{get_children_of_dir, resolve_target_or_head},
 };
 use anyhow::{Context, bail};
@@ -93,7 +97,7 @@ impl Repo {
 
         match stripped {
             Some(ref_path) => Ok(ref_path.to_string()),
-            None => bail!("HEAD file is corrupted"),
+            None => Ok(content),
         }
     }
 
@@ -276,14 +280,28 @@ impl Repo {
 
     pub fn is_working_tree_clean(&self) -> anyhow::Result<bool> {
         let index = self.get_index()?;
-        let diff = Diff::from_working_tree_and_index(&self, &index)?;
+        let diff = Diff::from_working_tree_and_index(self, &index)?;
 
-        let commit = resolve_target_or_head(self,None)?;
+        let commit = resolve_target_or_head(self, None)?;
 
         let hm = flatten_committed_files(self, &commit)?;
 
         let diff2 = Diff::from_index_and_repo(&index, &hm);
 
         Ok(diff.is_empty() && diff2.is_empty())
+    }
+
+    pub fn move_to_branch(&self, text: &str) -> anyhow::Result<()> {
+        let branch_path = format!("ref: refs/heads/{}", text);
+        self.write_to_head(&branch_path)
+    }
+
+    pub fn write_to_head(&self, text: &str) -> anyhow::Result<()> {
+        fs::write(self.data_dir.join("HEAD"), text).context("acessing HEAD file")?;
+        Ok(())
+    }
+
+    pub fn get_branch_by_name(&self, name: &str) -> PathBuf {
+        Path::new("refs/heads").join(name)
     }
 }

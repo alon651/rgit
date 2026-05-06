@@ -1,10 +1,9 @@
-use crate::structures::{commit::Commit, diff::{Diff, flatten_committed_files}, object::Object, repo::Repo, tree::Tree};
-use anyhow::{Context, anyhow};
-use std::{
-    collections::HashMap,
-    env,
-    path::{Path, PathBuf},
+use crate::structures::{
+    diff::{Diff, flatten_committed_files},
+    repo::Repo,
 };
+use anyhow::{Context, anyhow};
+use std::{env, path::Path};
 
 pub fn exec() -> anyhow::Result<()> {
     let repo = Repo::find(&env::current_dir()?).ok_or_else(|| anyhow!("didn't find a repo"))?;
@@ -52,7 +51,6 @@ pub fn exec() -> anyhow::Result<()> {
 
     Ok(())
 }
-
 
 fn print_sections(sections: &[(&str, &[String])]) {
     let visible: Vec<_> = sections

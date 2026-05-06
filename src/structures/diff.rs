@@ -3,7 +3,11 @@ use hex::encode;
 use walkdir::WalkDir;
 
 use crate::structures::{
-    commit::Commit, index::Index, object::{Object, ObjectType}, repo::Repo, tree::Tree
+    commit::Commit,
+    index::Index,
+    object::{Object, ObjectType},
+    repo::Repo,
+    tree::Tree,
 };
 
 use std::{
@@ -13,6 +17,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[derive(Debug)]
 pub struct Diff {
     pub modified: Vec<String>,
     pub added: Vec<String>,
@@ -105,6 +110,16 @@ impl Diff {
     pub fn is_empty(&self) -> bool {
         self.added.is_empty() && self.modified.is_empty() && self.deleted.is_empty()
     }
+
+    ///inverts a diff - converts the added to remove and the removed to added
+    /// done to inverse diff direction
+    pub fn inverse(&self) -> Diff {
+        Diff {
+            modified: self.modified.clone(),
+            added: self.deleted.clone(),
+            deleted: self.added.clone(),
+        }
+    }
 }
 
 fn file_hash_changed(
@@ -117,8 +132,10 @@ fn file_hash_changed(
     Ok(index_entry.sha1 != object.hash())
 }
 
-
-pub fn flatten_committed_files(repo: &Repo, commit: &str) -> anyhow::Result<HashMap<PathBuf, String>> {
+pub fn flatten_committed_files(
+    repo: &Repo,
+    commit: &str,
+) -> anyhow::Result<HashMap<PathBuf, String>> {
     let commit_obj = Object::read(repo, commit, true)?;
     let commit = Commit::from_object(&commit_obj)?;
 
