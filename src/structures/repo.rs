@@ -1,13 +1,15 @@
 use crate::{
     structures::{
         diff::{Diff, flatten_committed_files},
-        index::Index,
+        index::{Index, IndexEntry},
         object::Object,
     },
     utils::{get_children_of_dir, resolve_target_or_head},
 };
 use anyhow::{Context, bail};
+use hex::decode_to_slice;
 use std::{
+    collections::HashMap,
     fs::{self},
     path::{Path, PathBuf},
 };
@@ -303,5 +305,32 @@ impl Repo {
 
     pub fn get_branch_by_name(&self, name: &str) -> PathBuf {
         Path::new("refs/heads").join(name)
+    }
+
+    pub fn sync(&self, commited: &HashMap<PathBuf, String>) -> anyhow::Result<()> {
+        let mut index = Index::new();
+
+        for (path, hash) in commited {
+            let newpath = self.work_dir.join(path);
+
+            // let file_md = newpath.metadata().unw;
+            let Ok(file_md) = newpath.metadata() else {
+                continue;
+            };
+
+            let mut hash_slice: [u8; 20] = [0; 20];
+
+            decode_to_slice(hash, &mut hash_slice)?;
+
+            let path = path.display().to_string();
+
+            let index_entry = IndexEntry::from_metadata(&file_md, hash_slice, path.clone());
+
+            index.entries.insert(path, index_entry);
+        }
+
+        self.save_index(index)?;
+
+        Ok(())
     }
 }

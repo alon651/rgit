@@ -48,10 +48,10 @@ impl Diff {
                 added.push(relative_str);
             } else {
                 let index_entry = &index.entries[&relative_str];
-                if metadata.mtime() > index_entry.mtime as i64 {
-                    if let Ok(true) = file_hash_changed(repo, relative, index_entry) {
-                        modified.push(relative_str);
-                    }
+                if metadata.mtime() > index_entry.mtime as i64
+                    && let Ok(true) = file_hash_changed(repo, relative, index_entry)
+                {
+                    modified.push(relative_str);
                 }
             }
         }

@@ -88,7 +88,7 @@ impl Default for Index {
 }
 
 impl IndexEntry {
-    fn from_metadata(md: &Metadata, sha: [u8; 20], rel_path: String) -> Self {
+    pub fn from_metadata(md: &Metadata, sha: [u8; 20], rel_path: String) -> Self {
         Self {
             ctime: md.ctime() as u32,
             mtime: md.mtime() as u32,

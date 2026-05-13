@@ -84,10 +84,10 @@ impl Object {
             }
         };
 
-        if name.len() >= 4 {
-            if let Some(path) = Self::expand_object_hash(repo, name)? {
-                return Ok(path);
-            }
+        if name.len() >= 4
+            && let Some(path) = Self::expand_object_hash(repo, name)?
+        {
+            return Ok(path);
         };
 
         let tag = repo.get_tag_path(name);

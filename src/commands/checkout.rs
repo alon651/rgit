@@ -31,7 +31,7 @@ pub fn exec(target: &str, create_branch: bool) -> anyhow::Result<()> {
 
         // delete all files in index
 
-        let committed = flatten_committed_files(&repo, target)?;
+        let committed: HashMap<PathBuf, String> = flatten_committed_files(&repo, target)?;
 
         let diff = Diff::from_index_and_repo(&index, &committed).inverse();
 
@@ -55,7 +55,7 @@ pub fn exec(target: &str, create_branch: bool) -> anyhow::Result<()> {
             repo.write_to_head(&hash)?;
         }
 
-        //todo! sync index
+        repo.sync(&committed)?;
     }
 
     Ok(())
